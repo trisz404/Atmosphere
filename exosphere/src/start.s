@@ -70,8 +70,8 @@
     msr  oslar_el1, x0
 .endm
 
-.align      6
 .section    .cold_crt0.text.start, "ax", %progbits
+.align      6
 .global     __start_cold
 __start_cold:
     ERRATUM_INVALIDATE_BTB_AT_BOOT
@@ -81,18 +81,16 @@ __start_cold:
     mov  sp, x0
     mov  fp, #0
 
-    adr x0, g_coldboot_crt0_relocation_list
-    adr x1, g_coldboot_crt0_main_func_list
+    adrp x19, g_coldboot_crt0_relocation_list
+    add  x19, x19, #:lo12:g_coldboot_crt0_relocation_list
+    mov  x0, x19
     bl   coldboot_init
-    adr x0, g_coldboot_crt0_relocation_list
-    ldr x1, =__start_reloc_list_addr
-    str x0, [x1]
 
     ldr  x16, =__jump_to_main_cold
     br   x16
 
-.align      6
 .section    .warm_crt0.text.start, "ax", %progbits
+.align      6
 .global     __start_warm
 __start_warm:
     ERRATUM_INVALIDATE_BTB_AT_BOOT
@@ -134,8 +132,8 @@ __set_memory_registers:
     isb
     ret
 
-.align      4
 .section    .text.__jump_to_main_cold, "ax", %progbits
+.align      4
 __jump_to_main_cold:
     /* This is inspired by Nintendo's code but significantly different */
     bl   __set_exception_entry_stack_pointer
@@ -150,8 +148,6 @@ __jump_to_main_cold:
     bl   get_pk2ldr_stack_address
     mov  sp, x0
 
-    ldr x1, =__start_reloc_list_addr
-    ldr x0, [x1]
     bl   load_package2
 
     mov  w0, #3 /* use core3 stack temporarily */
@@ -210,12 +206,13 @@ __jump_to_lower_el:
     eret
 
 /* Custom stuff */
-.align      3
 .section    .cold_crt0.data.g_coldboot_crt0_relocation_list, "aw", %progbits
+.align      3
 .global     g_coldboot_crt0_relocation_list
 g_coldboot_crt0_relocation_list:
     .quad   0, __loaded_end_lma__  /* __start_cold, to be set & loaded size */
     .quad   1, 5                   /* number of sections to relocate/clear before & after mmu init */
+    .quad   g_warmboot_crt0_main_func_list
     /* Relocations */
     .quad   __warmboot_crt0_start__, __warmboot_crt0_end__, __warmboot_crt0_lma__
     .quad   __main_start__, __main_bss_start__, __main_lma__
@@ -225,18 +222,8 @@ g_coldboot_crt0_relocation_list:
     .quad   __main_bss_start__, __main_end__, 0
     .quad   __pk2ldr_bss_start__, __pk2ldr_end__, 0
 
-.align      3
-.section    .cold_crt0.data.g_coldboot_crt0_main_func_list, "aw", %progbits
-.global     g_coldboot_crt0_main_func_list
-g_coldboot_crt0_main_func_list:
-    .quad   3   /* Number of functions */
-    /* Functions */
-    .quad   set_memory_registers_enable_mmu
-    .quad   flush_dcache_all
-    .quad   invalidate_icache_all
-
-.align      3
 .section    .warm_crt0.data.g_warmboot_crt0_main_func_list, "aw", %progbits
+.align      3
 .global     g_warmboot_crt0_main_func_list
 g_warmboot_crt0_main_func_list:
     .quad   3   /* Number of functions */
@@ -244,9 +231,3 @@ g_warmboot_crt0_main_func_list:
     .quad   set_memory_registers_enable_mmu
     .quad   flush_dcache_all
     .quad   invalidate_icache_all
-
-.align      3
-.section    .bss.__start_reloc_list_addr, "w", %nobits
-.global     __start_reloc_list_addr
-__start_reloc_list_addr:
-    .space  8
