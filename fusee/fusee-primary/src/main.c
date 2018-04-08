@@ -74,29 +74,14 @@ int main(void) {
     display_enable_backlight(true);
     
     /* Say hello. */
-    printk("Welcome to Atmosph\xe8re Fus\xe9" "e!\n");
+    printk("Welcome to Atmosph\xe8re Fus\xe9" "e! SDMMC Development Edition!\n");
     printk("Using color linear framebuffer at 0x%p!\n", lfb_base);
     
     /* Try to load the SBK into the security engine, if possible. */
     /* TODO: Should this be done later? */
     load_sbk();
     
-    /* Load the BCT0 configuration ini off of the SD. */
-    bct0 = load_config();
-    
-    /* Load the loader payload into DRAM. */
-    stage2_entrypoint = load_stage2(bct0);
-    
-    /* Setup argv. */
-    memset(stage2_argv, 0, STAGE2_ARGC * sizeof(*stage2_argv));
-    stage2_argv[STAGE2_ARGV_VERSION] = &stage2_argv[STAGE2_ARGC];
-    *((u32 *)stage2_argv[STAGE2_ARGV_VERSION]) = 0;
-    stage2_argv[STAGE2_ARGV_CONFIG] = (void *)bct0;
-    stage2_argv[STAGE2_ARGV_LFB] = lfb_base;
-    
-    
-    /* Jump to Stage 2. */
-    stage2_entrypoint(STAGE2_ARGC, stage2_argv);
+
     return 0;
 }
 
