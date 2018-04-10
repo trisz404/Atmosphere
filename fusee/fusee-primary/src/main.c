@@ -2,6 +2,7 @@
 #include "hwinit.h"
 #include "fuse.h"
 #include "se.h"
+#include "sdmmc.h"
 #include "sd_utils.h"
 #include "stage2.h"
 #include "lib/printk.h"
@@ -53,11 +54,13 @@ void load_sbk(void) {
 }
 
 int main(void) {
-    stage2_entrypoint_t stage2_entrypoint;
-    void **stage2_argv = (void **)(BCT0_LOAD_END_ADDRESS);
+    //stage2_entrypoint_t stage2_entrypoint;
+    //void **stage2_argv = (void **)(BCT0_LOAD_END_ADDRESS);
     const char *bct0;
     u32 *lfb_base;
     
+    (void)(bct0);
+
     /* Initialize DRAM. */
     /* TODO: What can be stripped out to make this minimal? */
     nx_hwinit();
@@ -77,10 +80,9 @@ int main(void) {
     printk("Welcome to Atmosph\xe8re Fus\xe9" "e! SDMMC Development Edition!\n");
     printk("Using color linear framebuffer at 0x%p!\n", lfb_base);
     
-    /* Try to load the SBK into the security engine, if possible. */
-    /* TODO: Should this be done later? */
-    load_sbk();
-    
+    sdmmc1_init();
+
+    printk("Performed sdmmc1_init");
 
     return 0;
 }

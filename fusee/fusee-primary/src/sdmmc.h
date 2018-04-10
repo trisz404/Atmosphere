@@ -4,6 +4,32 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+
+/* registers needed for setting up sdio */
+#define CAR_BASE    0x60006000
+#define SDMMC1_BASE 0x700b0000
+
+
+/* constants needed for sdmmc1 register poking */
+#define CLK_RST_CONTROLLER_RST_DEV_L_SET_0              (CAR_BASE + 0x300)
+#define CLK_RST_CONTROLLER_RST_DEV_L_CLR_0              (CAR_BASE + 0x304)
+#define CLK_RST_CONTROLLER_RST_DEVICES_L_0              (CAR_BASE + 0x4)
+#define CLK_RST_CONTROLLER_CLK_SOURCE_SDMMC1_0          (CAR_BASE + 0x150)
+#define CLK_RST_CONTROLLER_CLK_SOURCE_SDMMC_LEGACY_TM_0 (CAR_BASE + 0x694)
+#define CLK_RST_CONTROLLER_CLK_ENB_L_SET_0              (CAR_BASE + 0x320)
+#define CLK_RST_CONTROLLER_CLK_OUT_ENB_Y_0              (CAR_BASE + 0x298)
+
+#define CLK_M_PLLP_OUT0             (0b000 << 29)
+#define SDMMC_LEGACY_PLLP_OUT0      (0b100 << 29)
+#define CLK_M_MASK                  (0b111 << 29)                     
+#define SWR_SDMMC1_RST              (1 << 14)
+#define CLK_DIV_MASK                (0xFF)
+#define CLK_DIV_IDENT               (31)  //(N/2) + 1
+#define SDMMC_LEGACY_CLK_DIV        (66) //N/2 + 1 = 408 / 12 
+#define SDMMC_LEGACY_DIV_MSK        (0xFF)
+#define SET_CLK_ENB_SDMMC1          (1 << 14)
+#define CLK_ENB_SDMMC_LEGACY_TM_ENB (1 << 1)
+
 typedef struct {
     uint32_t SDHCI_DMA_ADDRESS;
     uint16_t SDHCI_BLOCK_SIZE;
@@ -88,6 +114,8 @@ typedef struct {
     uint32_t SDMMC_TIMEOUT_WCOAL_SDMMCA;
     uint32_t _0x1FC;
 } sdmmc_registers_t;
+
+void sdmmc1_init(void);
 
 static inline volatile sdmmc_registers_t *get_sdmmc1_regs(void) {
     return (volatile sdmmc_registers_t *)(0x700B0000);
