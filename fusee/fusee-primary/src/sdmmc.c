@@ -128,14 +128,11 @@ void sdmmc1_init(void)
     printk("sdmmc1_init: waiting for SD card\n");
 
     while((reg_state >> 1) & 0b1){
-    //read bit 
     	reg_state = GPIO_7(0x34);
-		//printk("%d\n", (reg_state >> 1) & 0b1);
 		udelay(100000);
 	}
 
     printk("sdmmc1_init: SD card found, turning on\n");
-    //done?
 
     //write 1 to SDMMCA_SDMEMCOMPPADCTRL_0_PAD_E_INPUT_OR_E_PWRD because the TRM says we should
     SDMMC1_SDMEMCOMPPADCTRL_0 |= (1 << 0x1F);
