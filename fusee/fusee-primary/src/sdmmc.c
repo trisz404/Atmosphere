@@ -4,6 +4,10 @@
 #include "hwinit/t210.h"
 #include "lib/printk.h"
 
+#define SDMMC1_BASE 				0x700b0000
+#define SDMMC1_SDMEMCOMPPADCTRL_0 	(*(volatile uint32_t *)(SDMMC1_BASE + 0x1e0))
+
+
 #define TIMER_BASE  0x60005000 
 #define GPIO_BASE 0x6000D000
 #define GPIO_7_BASE (GPIO_BASE + 0x600)
@@ -12,6 +16,16 @@
 #define MISC_BASE 					0x70000000
 #define PINMUX_BASE 				MISC_BASE + 0x3000
 #define PINMUX_AUX_GPIO_PZ1_0 		(*(volatile uint32_t *)(PINMUX_BASE + 0x280))
+
+#define PINMUX_AUX_DMIC3_CLK_0		(*(volatile uint32_t *)(PINMUX_BASE + 0xb4))
+#define PINMUX_AUX_GPIO_PE4_0 		PINMUX_AUX_DMIC3_CLK_0
+
+#define PINMUX_AUX_SDMMC1_CLK_0		(*(volatile uint32_t *)(APBDEV_PMC_BASE + 0x00))
+#define PINMUX_AUX_SDMMC1_CMD_0		(*(volatile uint32_t *)(APBDEV_PMC_BASE + 0x04))
+#define PINMUX_AUX_SDMMC1_DAT3_0	(*(volatile uint32_t *)(APBDEV_PMC_BASE + 0x08))
+#define PINMUX_AUX_SDMMC1_DAT2_0	(*(volatile uint32_t *)(APBDEV_PMC_BASE + 0x10))
+#define PINMUX_AUX_SDMMC1_DAT1_0	(*(volatile uint32_t *)(APBDEV_PMC_BASE + 0x14))
+#define PINMUX_AUX_SDMMC1_DAT0_0	(*(volatile uint32_t *)(APBDEV_PMC_BASE + 0x18))
 
 #define APBDEV_PMC_BASE 			0x7000e400
 #define APBDEV_PMC_PWR_DET_0 		(*(volatile uint32_t *)(APBDEV_PMC_BASE +  0x48))
@@ -60,26 +74,6 @@ void sdmmc1_init(void)
 
     //pull sdmmc1 out of reset
     *sdmmc1_rst_clr |= SWR_SDMMC1_RST;
-
-    //gpio setup: 
-    //need pinmux for gpios
-    //need gpio direction
-    //need gpio values 
-
-    //0x02	0x24	E, 4	SDCard Power		Out	
-	//0x38	0xC9	Z, 1	SDCard Card Detect	In	
-
-
-    //E, 4 is GPIO_2, offset 0x10
-
-    //getting i/o = 1 requires:
-    
-    
-    //set pin to high (0x1 to output val reg)
-
-    //uint32_t pin_4 = 0b10000;
-    //uint32_t pin_4_mask = ~pin_4;
-
     
     //bring up GPIO power rails
 	APBDEV_PMC_PWR_DET_0 |= 0xA42000u;
@@ -98,40 +92,59 @@ void sdmmc1_init(void)
   	printk("PMC_IO_DPD2_REQ = %08x\n", APBDEV_PMC_IO_DPD2_REQ_0);
   	
 
+
+
   	uint32_t pinmux_pullup_mask = (0b11 << 2);
   	uint32_t pull_up = (0b10 << 2);
 
   	//set pull-up resistors on Z1
+  	//sdmmc card detect is now possible
  	PINMUX_AUX_GPIO_PZ1_0 = (PINMUX_AUX_GPIO_PZ1_0 & ~pinmux_pullup_mask) | pull_up;
+ 	
+ 	//set pull-up resistors on E4
+ 	//sdmmc card detect 
+ 	PINMUX_AUX_GPIO_PE4_0 = (PINMUX_AUX_GPIO_PE4_0 & ~pinmux_pullup_mask) | pull_up;
 
 
+    uint32_t gpio_pin_1 = 1 << 1;
+    uint32_t gpio_pin_1_mask = ~gpio_pin_1;
+    uint32_t gpio_pin_4 = 1 << 4;
+    uint32_t gpio_pin_4_mask = ~ gpio_pin_4;
 
-    uint32_t pin_1 = 0b10;
-    uint32_t pin_1_mask = ~pin_1;
-
-    //set as GPIO (0x0 to GPIO CNF 1)
-    GPIO_7( 0x4) = (GPIO_7( 0x4) & pin_1_mask) | pin_1;
-
-    //direction config (0x1 to GPIO OE)
-    GPIO_7(0x14) = (GPIO_7(0x14) & pin_1_mask) | 0x0;
-
-    //= (GPIO_2(0x20) & pin_4_mask) | pin_4;
+    //set Z1 in GPIO mode (0x0 to GPIO CNF 1)
+    GPIO_7( 0x4) = (GPIO_7( 0x4) & gpio_pin_1_mask) | gpio_pin_1;
+    //set Z1 as input (0x0 to GPIO OE)
+    GPIO_7(0x14) = (GPIO_7(0x14) & gpio_pin_1_mask) | 0x0;
+    //set E4 in GPIO mode 
+    GPIO_2( 0x0) = (GPIO_2( 0x0) & gpio_pin_4_mask) | gpio_pin_4;
+    //set E4 as output (0x1 to GPIO OE)
+    GPIO_2(0x10) = (GPIO_2(0x10) & gpio_pin_4_mask) | gpio_pin_4;
 
     uint32_t reg_state;
+	udelay(100000);
 
-    while(1){
+    reg_state = GPIO_7(0x34);
+
+    printk("sdmmc1_init: waiting for SD card\n");
+
+    while((reg_state >> 1) & 0b1){
     //read bit 
     	reg_state = GPIO_7(0x34);
-		printk("%d", reg_state & 0xFF);
+		//printk("%d\n", (reg_state >> 1) & 0b1);
 		udelay(100000);
 	}
 
-    printk("done in sdmmc\n");
+    printk("sdmmc1_init: SD card found, turning on\n");
     //done?
 
-	//read for presence of sd card
-	//if present, power sd card and return
-	//if not present, print error and panic
+    //write 1 to SDMMCA_SDMEMCOMPPADCTRL_0_PAD_E_INPUT_OR_E_PWRD because the TRM says we should
+    SDMMC1_SDMEMCOMPPADCTRL_0 |= (1 << 0x1F);
+    //write to E4, turning on SD card
+    GPIO_2(0x20) = (GPIO_2(0x20) & gpio_pin_4_mask) | gpio_pin_4;
+
+    printk("sdmmc1_init: SD card on! Let's roll!\n");
+
+
 }
 
 /* Initialize the SDMMC2 (GC asic) controller */
