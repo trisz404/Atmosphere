@@ -12,6 +12,14 @@ int main(void) {
     /* Initialize DRAM. */
     /* TODO: What can be stripped out to make this minimal? */
     nx_hwinit();
+
+    mc_enable_ahb_redirect();
+
+    u8 dst[0x10];
+    int ret;
+    ret = tsec_query(dst, sizeof(dst));
+
+    mc_disable_ahb_redirect();
     
     /* Initialize the display. */
     display_init();
@@ -27,6 +35,14 @@ int main(void) {
     /* Say hello. */
     printk("Hi there!\n");
     printk("You want some frash tsec key, right?\n");
+
+    if (ret == 0) {
+        printk("TSEC: ");
+        for (unsigned int i = 0; i < 0x10; i++)
+            printk("%02x", dst[i]);
+        printk("\n");
+    } else
+        printk("TSEC error %d\n", ret);
 
     return 0;
 }
