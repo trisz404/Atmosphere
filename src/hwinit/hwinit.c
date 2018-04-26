@@ -79,7 +79,7 @@ void mc_config_carveout()
 	MC(0x650) = 1;
 
 	//Official code disables and locks the carveout here.
-	//mc_config_tsec_carveout(0, 0, 1);
+	mc_config_tsec_carveout(0, 0, 1);
 
 	MC(0x9A0) = 0;
 	MC(0x9A4) = 0;

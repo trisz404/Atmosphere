@@ -6,6 +6,7 @@
 #include "hwinit/types.h"
 #include "hwinit/hwinit.h"
 #include "hwinit/i2c.h"
+#include "hwinit/tsec.h"
 
 #include <stdbool.h>
 

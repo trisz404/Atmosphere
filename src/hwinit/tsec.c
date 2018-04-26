@@ -3,7 +3,7 @@
 #include "clock.h"
 #include "t210.h"
 
-static const u8 _tsec_fw[3840] __attribute__((aligned(0x100))) = {
+static const u8 _tsec_fw[0xf00] __attribute__((aligned(0x100))) = {
 	/* ... */
 };
 
@@ -34,7 +34,7 @@ static int _tsec_dma_pa_to_internal_100(int not_imem, int i_offset, int pa_offse
 	return _tsec_dma_wait_idle();
 }
 
-int tsec_query(u32 carveout, u8 *dst, u32 rev)
+int tsec_query(u8 *dst, u32 destlen)
 {
 	int res = 0;
 
@@ -58,8 +58,7 @@ int tsec_query(u32 carveout, u8 *dst, u32 rev)
 	}
 
 	//Load firmware.
-	memcpy((void *)carveout, _tsec_fw, 0xF00);
-	TSEC(0x1110) = carveout >> 8;// tsec_dmatrfbase_r
+	TSEC(0x1110) = ((u32)_tsec_fw) >> 8;// tsec_dmatrfbase_r
 	for (u32 addr = 0; addr < 0xF00; addr += 0x100)
 		if (!_tsec_dma_pa_to_internal_100(0, addr, addr))
 		{
@@ -70,7 +69,7 @@ int tsec_query(u32 carveout, u8 *dst, u32 rev)
 	//Execute firmware.
 	HOST1X(0x3300) = 0x34C2E1DA;
 	TSEC(0x1044) = 0;
-	TSEC(0x1040) = rev;
+	TSEC(0x1040) = 1;
 	TSEC(0x1104) = 0; // tsec_bootvec_r
 	TSEC(0x1100) = 2; // tsec_cpuctl_r
 	if (!_tsec_dma_wait_idle())
@@ -102,7 +101,9 @@ int tsec_query(u32 carveout, u8 *dst, u32 rev)
 	SOR1(0x21C) = 0;
 	SOR1(0x208) = 0;
 	SOR1(0x20C) = 0;
-	memcpy(dst, &buf, 0x10);
+	if (destlen > 0x10)
+		destlen = 0x10;
+	memcpy(dst, &buf, destlen);
 
 out:;
 

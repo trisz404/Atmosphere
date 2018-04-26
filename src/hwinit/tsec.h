@@ -3,6 +3,6 @@
 
 #include "types.h"
 
-int tsec_query(u32 carveout, u8 *dst, u32 rev);
+int tsec_query(u8 *dst,  u32 destlen);
 
 #endif
