@@ -1,10 +1,11 @@
 rwildcard = $(foreach d, $(wildcard $1*), $(filter $(subst *, %, $2), $d) $(call rwildcard, $d/, $2))
 
-ifeq ($(strip $(DEVKITARM)),)
-$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
-endif
+CROSS_COMPILE = arm-none-eabi-
 
-include $(DEVKITARM)/base_tools
+# Use our cross-compile prefix to set up our basic cross compile environment.
+CC      = $(CROSS_COMPILE)gcc
+LD      = $(CROSS_COMPILE)ld
+OBJCOPY = $(CROSS_COMPILE)objcopy
 
 name := fusee-primary
 

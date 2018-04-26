@@ -67,9 +67,9 @@ static inline void write64be(volatile void *qword, size_t offset, uint64_t value
     write64le(qword, offset, __builtin_bswap64(value));
 }
 
-static inline bool check_32bit_additive_overflow(uint32_t a, uint32_t b) {
+/*static inline bool check_32bit_additive_overflow(uint32_t a, uint32_t b) {
     return __builtin_add_overflow_p(a, b, (uint32_t)0);
-}
+}*/
 
 void panic(uint32_t code);
 void generic_panic(void);

@@ -83,7 +83,7 @@ CONFIG_VIDEO_HW_CURSOR:	     - Uses the hardware cursor capability of the
 
 #include "video_fb.h"
 #include <string.h>
-
+#include <stdint.h>
 
 #if defined(CONFIG_VIDEO_FONT_SMALL)
 #include "video_font_small.h"
