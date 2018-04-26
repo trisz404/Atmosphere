@@ -7,7 +7,7 @@ CC      = $(CROSS_COMPILE)gcc
 LD      = $(CROSS_COMPILE)ld
 OBJCOPY = $(CROSS_COMPILE)objcopy
 
-name := fusee-primary
+name := tsec_dumper
 
 dir_source := src
 dir_build := build
