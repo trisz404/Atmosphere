@@ -59,19 +59,5 @@ dkms.conf
 
 .**/
 
-exosphere/bpmpfw/out/**
-exosphere/bpmpfw/build/**
-exosphere/build/**
-exosphere/out/**
-fusee/fusee-primary/out/**
-fusee/fusee-primary/build/**
-fusee/fusee-secondary/out/**
-fusee/fusee-secondary/build/**
-fusee/fusee-tertiary/out/**
-fusee/fusee-tertiary/build/**
-fusee/out/**
-fusee/build/**
-stratosphere/loader/out/**
-stratosphere/loader/build/**
-stratosphere/sm/out/**
-stratosphere/sm/build/**
+out/**
+build/**
